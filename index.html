@@ -88,8 +88,8 @@ footer{text-align:center;color:var(--faint);font-size:12px;padding:8px 20px 30px
     <div class="hero-top">
       <div>
         <span class="hero-tag">T.COM 월간 트래킹</span>
-        <h2>Universal Thread T.com 리서치</h2>
-        <div class="hero-sub">Tops · Bottoms · Dress — 신상 · 가격 · Vendor · Fabric 트래킹</div>
+        <h2>Universal Thread Monthly Floorpad</h2>
+        <div class="hero-sub">DPCI 013 니트 · Knit Top · Leisure — 신상 · 가격 · Vendor · Fabric 트래킹</div>
       </div>
       <div class="datebox"><div class="lbl">최신 회차</div><div class="val" id="heroDate"></div></div>
     </div>
@@ -124,14 +124,14 @@ const FLOORPAD = [
 ];
 
 // T.com 월별 리서치 (report.html 의 회차 id 와 같아야 합니다)
-// all=전체, nw=신규, t/b/d=Tops/Bottoms/Dress 수, tn/bn/dn=카테고리별 신규, sae=Sae-A 스타일 수
+// all=전체, nw=신규, k/kn=Knit Top 수/신규, l/ln=Leisure 수/신규, d=Dress(이전 분류), sae=Sae-A 스타일 수
 const TCOM = [
-  {id:"2026-10", all:73, nw:18, t:51, tn:12, b:11, bn:2,  d:11, dn:4, sae:24},
-  {id:"2026-09", all:89, nw:38, t:70, tn:29, b:12, bn:4,  d:7,  dn:5, sae:28},
-  {id:"2026-07", all:93, nw:34, t:81, tn:32, b:10, bn:2,  d:2,  dn:0, sae:29},
-  {id:"2026-06", all:83, nw:64, t:65, tn:50, b:13, bn:10, d:5,  dn:4, sae:26},
-  {id:"2026-02", all:39, nw:14, t:31, tn:10, b:6,  bn:2,  d:2,  dn:2, sae:12},
-  {id:"2026-01", all:84, nw:0,  t:56, tn:0,  b:14, bn:0,  d:14, dn:0, sae:27, base:true}
+  {id:"2026-10", all:73, nw:18, k:36, kn:7, l:37, ln:11, d:0, sae:24, auto:true},
+  {id:"2026-09", all:89, nw:38, k:55, kn:24, l:34, ln:14, d:0, sae:28},
+  {id:"2026-07", all:93, nw:34, k:59, kn:28, l:34, ln:6, d:0, sae:29},
+  {id:"2026-06", all:83, nw:64, k:43, kn:32, l:36, ln:29, d:4, sae:26},
+  {id:"2026-02", all:39, nw:14, k:20, kn:5, l:17, ln:7, d:2, sae:12},
+  {id:"2026-01", all:84, nw:0, k:37, kn:0, l:33, ln:0, d:14, sae:27, base:true}
 ];
 /* ===================================================================== */
 
@@ -144,7 +144,7 @@ const L=TCOM[0];
 $("heroDate").textContent=L.id;
 $("heroCta").href="report.html?r="+L.id;
 $("heroStats").innerHTML=[
-  [L.all,"전체 스타일"],[L.nw,"NEW",1],[L.t,`Tops (${L.tn} new)`],[L.b,`Bottoms (${L.bn} new)`],[L.d,`Dress (${L.dn} new)`],[L.sae,"Sae-A"]
+  [L.all,"전체 스타일"],[L.nw,"NEW",1],[L.k,`Knit Top (${L.kn} new)`],[L.l,`Leisure (${L.ln} new)`],[L.sae,"Sae-A"]
 ].map(([n,l,g])=>`<div class="stat"><div class="num${g?" gold":""}">${n}</div><div class="lbl">${l}</div></div>`).join("");
 
 // Latest store-visit document
@@ -164,8 +164,8 @@ $("fpList").innerHTML=FLOORPAD.map((x,i)=>`<a class="histrow" href="${esc(x.url)
 $("tcTitle").textContent=`T.com 리서치 업데이트 히스토리 (${TCOM.length}회)`;
 $("tcList").innerHTML=TCOM.map((x,i)=>`<a class="histrow" href="report.html?r=${x.id}">
   <div class="histdate">${x.id}${latestTag(i)}</div>
-  <div class="histlabel">Tops <b>${x.t}</b>(${x.tn} new) · Bottoms <b>${x.b}</b>(${x.bn} new) · Dress <b>${x.d}</b>(${x.dn} new)</div>
-  <div class="badges"><span class="mb">전체 ${x.all}</span>${x.base?'<span class="mb">기준 회차</span>':`<span class="mb new">NEW ${x.nw}</span>`}</div>
+  <div class="histlabel">Knit Top <b>${x.k}</b>${x.base?"":`(${x.kn} new)`} · Leisure <b>${x.l}</b>${x.base?"":`(${x.ln} new)`}${x.d?` · Dress <b>${x.d}</b>`:""}</div>
+  <div class="badges"><span class="mb">전체 ${x.all}</span>${x.base?'<span class="mb">기준 회차</span>':`<span class="mb new">NEW ${x.nw}</span>`}${x.auto?'<span class="mb">T.com 자동</span>':''}</div>
   <div class="arrow">→</div></a>`).join("");
 </script>
 </body>
