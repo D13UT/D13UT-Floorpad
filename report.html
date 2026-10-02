@@ -89,7 +89,7 @@ function exportXlsx(r,list,tag){
 }
 window.IMGS=window.IMGS||{};const LOADING={};
 const isrc=(x,rid)=>!x.iu?"":x.iu.startsWith("m:")?((IMGS[rid]||{})[x.iu.slice(2)]||""):x.iu;
-function needImgs(r){if(!r.items.some(x=>(x.iu||"").startsWith("m:"))||IMGS[r.id]||LOADING[r.id])return;LOADING[r.id]=1;const sc=document.createElement("script");sc.src="img_"+r.id+".js?v=1";sc.onload=()=>draw();document.head.appendChild(sc)}
+function needImgs(r){if(!r.items.some(x=>(x.iu||"").startsWith("m:"))||IMGS[r.id]||LOADING[r.id])return;LOADING[r.id]=1;const sc=document.createElement("script");sc.src=({"2026-01":"ut_photos_2026-01.js","2026-06":"ut_photos_2026-06.js","2026-07":"ut_photos_2026-07.js"}[r.id]||("img_"+r.id+".js"))+"?v=2";sc.onload=()=>draw();document.head.appendChild(sc)}
 function draw(){
  document.getElementById("rd").innerHTML=R.map((r,i)=>[r,i]).reverse().map(([r,i])=>`<button data-i="${i}" class="${i==cur?"on":""}">${r.id}${i==R.length-1?" (최신)":""}${r.auto?" · 자동":""}</button>`).join("");
  document.querySelectorAll("#rd button").forEach(b=>b.onclick=()=>{cur=+b.dataset.i;pg="all";cat="all";grp="all";onlyNew=false;try{history.replaceState(null,"","?r="+R[cur].id)}catch(_){};draw()});
