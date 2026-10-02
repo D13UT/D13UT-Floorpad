@@ -47,7 +47,7 @@ button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
 .pc{background:var(--card);border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(2,39,59,.08);display:flex;flex-direction:column;border:1px solid var(--line)}
 .pc.new{border-color:var(--gold)}.pc.disc{opacity:.62}
 .pi{position:relative;display:block;aspect-ratio:4/5;background:#eceef1;overflow:hidden}
-.pi img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}.pi img.ct{object-fit:contain;object-position:center}
+.pi img{width:100%;height:100%;object-fit:contain;object-position:center;display:block}.pi img.ct{object-fit:contain;object-position:center}
 .noimg{display:grid;place-items:center;height:100%;color:var(--mut);font-size:12px}
 .bd{position:absolute;top:8px;left:8px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;background:rgba(255,255,255,.92);color:#444;box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .bd.n{background:var(--navy);color:var(--goldl)}.bd.s{background:#fff4db;color:#7a5a12}.bd.a{left:auto;right:8px;background:var(--sae);color:#fff}
@@ -89,7 +89,7 @@ function exportXlsx(r,list,tag){
 }
 window.IMGS=window.IMGS||{};const LOADING={};
 const isrc=(x,rid)=>!x.iu?"":x.iu.startsWith("m:")?((IMGS[rid]||{})[x.iu.slice(2)]||""):x.iu;
-function needImgs(r){if(!r.items.some(x=>(x.iu||"").startsWith("m:"))||IMGS[r.id]||LOADING[r.id])return;LOADING[r.id]=1;const sc=document.createElement("script");sc.src=({"2026-01":"ut_photos_2026-01.js","2026-06":"ut_photos_2026-06.js","2026-07":"ut_photos_2026-07.js"}[r.id]||("img_"+r.id+".js"))+"?v=2";sc.onload=()=>draw();document.head.appendChild(sc)}
+function needImgs(r){if(!r.items.some(x=>(x.iu||"").startsWith("m:"))||IMGS[r.id]||LOADING[r.id])return;LOADING[r.id]=1;const sc=document.createElement("script");sc.src="ut_photos_"+r.id+"_v2.js";sc.onload=()=>draw();document.head.appendChild(sc)}
 function draw(){
  document.getElementById("rd").innerHTML=R.map((r,i)=>[r,i]).reverse().map(([r,i])=>`<button data-i="${i}" class="${i==cur?"on":""}">${r.id}${i==R.length-1?" (최신)":""}${r.auto?" · 자동":""}</button>`).join("");
  document.querySelectorAll("#rd button").forEach(b=>b.onclick=()=>{cur=+b.dataset.i;pg="all";cat="all";grp="all";onlyNew=false;try{history.replaceState(null,"","?r="+R[cur].id)}catch(_){};draw()});
