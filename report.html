@@ -55,6 +55,10 @@ button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
 .pb h4{margin:0 0 3px;font-size:13.5px;line-height:1.3}.pb h4 a{color:inherit;text-decoration:none}.pb h4 a:hover{text-decoration:underline}
 .pb .m{font-size:11.5px;color:var(--mut);line-height:1.35}.pb .f{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.pb .pr{font-weight:800;font-size:15px;margin-top:3px}
 @media(max-width:560px){.pg{grid-template-columns:repeat(2,1fr);gap:10px}}
+button.ve{background:#fff;color:var(--navy);border-color:var(--gold);font-weight:600}button.ve.on{background:var(--gold);color:#fff}button.sv{background:var(--sae);color:#fff;border-color:var(--sae);font-weight:600}button.sv:disabled{opacity:.45}
+.vi{width:100%;box-sizing:border-box;font:inherit;font-size:12px;padding:4px 6px;border:1px solid var(--gold);border-radius:6px;background:#fffaf2}.pc.ed{outline:2px solid var(--gold)}.vm{color:var(--gold);font-weight:600}
+.vbox{position:fixed;inset:0;background:rgba(2,39,59,.45);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}.vbox>div{background:#fff;border-radius:12px;padding:20px;max-width:420px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.25)}.vbox h3{margin:0 0 8px;color:var(--navy)}.vbox p{font-size:13px;color:var(--mut);margin:0 0 12px;line-height:1.5}.vbox input[type=password]{width:100%;box-sizing:border-box;padding:8px;border:1px solid var(--line);border-radius:6px;font:inherit}.vbox .bt{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.vmsg{margin:0 0 12px;padding:8px 12px;border-radius:8px;font-size:13px;background:#eef6f4;color:var(--sae)}.vmsg.err{background:#fbeeea;color:var(--new)}
 button.xl{margin-left:auto;background:var(--navy);color:#fff;border-color:var(--navy);font-weight:600}
 footer{margin-top:30px;color:var(--mut);font-size:12.5px}
 </style><script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -73,6 +77,41 @@ const e=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">
 const tc=x=>x.u||"https://www.target.com/s?searchTerm="+encodeURIComponent(x.d||x.p);
 const stat=(a,b)=>`<div><b>${a}</b><span>${b}</span></div>`;
 const cn=(r,t)=>r.items.filter(x=>x.t==t).length,sa=r=>r.items.filter(x=>x.v=="Sae-A").length;
+
+// ---- Vendor 수정 (사이트에서 직접) : vendors.json 에 저장 ----
+const GH={owner:"d13ut",repo:"D13UT-Floorpad",path:"vendors.json",branch:"main"};
+let VO={},PEND={},edit=false,vmsg="",verr=false,saving=false;
+const vk=x=>(x.d||"")+"|"+x.p;
+function applyVO(){R.forEach(r=>{const m=VO[r.id]||{},p=PEND[r.id]||{};r.items.forEach(x=>{if(x._v0===undefined)x._v0=x.v||"";const k=vk(x);x.v=(k in p)?p[k]:(k in m)?m[k]:x._v0;if(!x.v)delete x.v})})}
+const npend=()=>Object.values(PEND).reduce((s,m)=>s+Object.keys(m).length,0);
+const VNAMES=()=>[...new Set(["Sae-A","Apparel Links","Shin Won","Lamamba","Avalon","Decor","Cobest HK","Ralsey","Cobalt",...R.flatMap(r=>r.items.map(x=>x.v).filter(Boolean))])].sort();
+const b64e=s=>btoa(unescape(encodeURIComponent(s))),b64d=s=>decodeURIComponent(escape(atob(s.replace(/\s/g,""))));
+function getTok(){try{return localStorage.getItem("ut_gh_tok")||sessionStorage.getItem("ut_gh_tok")||""}catch(_){return window._tok||""}}
+function askTok(){return new Promise(res=>{const d=document.createElement("div");d.className="vbox";d.innerHTML=`<div><h3>저장 권한 확인</h3><p>Vendor 수정은 GitHub 저장소에 기록됩니다. 담당자에게 받은 <b>GitHub 토큰</b>을 붙여넣어 주세요. (토큰은 이 브라우저에만 보관되고 사이트에는 공개되지 않습니다)</p><input type="password" id="tk" placeholder="github_pat_..." autocomplete="off"><label style="display:block;font-size:13px;margin-top:10px"><input type="checkbox" id="tr" checked> 이 PC에서 기억하기</label><div class="bt"><button id="tc">취소</button><button id="tok" class="sv">확인</button></div></div>`;document.body.appendChild(d);const i=d.querySelector("#tk");i.focus();
+ const done=v=>{const t=(v||"").trim();if(t){window._tok=t;try{(d.querySelector("#tr").checked?localStorage:sessionStorage).setItem("ut_gh_tok",t)}catch(_){}}d.remove();res(t)};
+ d.querySelector("#tc").onclick=()=>done("");d.querySelector("#tok").onclick=()=>done(i.value);i.onkeydown=ev=>{if(ev.key=="Enter")done(i.value)}})}
+function forgetTok(){try{localStorage.removeItem("ut_gh_tok");sessionStorage.removeItem("ut_gh_tok")}catch(_){}window._tok=""}
+async function saveVO(){
+ if(!npend()||saving)return;let tok=getTok()||await askTok();if(!tok)return;
+ saving=true;vmsg="저장 중…";verr=false;draw();
+ const api=`https://api.github.com/repos/${GH.owner}/${GH.repo}/contents/${GH.path}`,H={Authorization:"Bearer "+tok,Accept:"application/vnd.github+json"};
+ try{
+  for(let t=0;t<3;t++){
+   const g=await fetch(api+"?ref="+GH.branch+"&t="+Date.now(),{headers:H,cache:"no-store"});
+   if(g.status==401||g.status==403){forgetTok();throw new Error("토큰이 올바르지 않거나 권한이 없습니다. 다시 저장을 눌러 토큰을 입력해 주세요.")}
+   let sha,cur={};if(g.ok){const j=await g.json();sha=j.sha;try{cur=JSON.parse(b64d(j.content))}catch(_){}}else if(g.status!=404)throw new Error("GitHub 응답 오류 ("+g.status+")");
+   const log=[];Object.entries(PEND).forEach(([rid,m])=>Object.entries(m).forEach(([k,v])=>{cur[rid]=cur[rid]||{};const x=(R.find(r=>r.id==rid)||{items:[]}).items.find(y=>vk(y)==k);if(x&&v===x._v0)delete cur[rid][k];else cur[rid][k]=v;log.push(rid+" "+k.split("|")[0]+" → "+(v||"(빈칸)"))}));
+   const body={message:"Vendor 수정 ("+log.length+"건): "+log.slice(0,5).join(", ")+(log.length>5?" 외":""),content:b64e(JSON.stringify(cur,null,1)),branch:GH.branch};if(sha)body.sha=sha;
+   const p=await fetch(api,{method:"PUT",headers:H,body:JSON.stringify(body)});
+   if(p.status==409||p.status==422&&sha){continue}
+   if(p.status==401||p.status==403){forgetTok();throw new Error("토큰에 쓰기 권한이 없습니다 (Contents: Read and write 필요).")}
+   if(!p.ok)throw new Error("저장 실패 ("+p.status+")");
+   VO=cur;PEND={};applyVO();vmsg="✔ "+log.length+"건 저장됨 — 1~2분 후 모든 사용자 화면에 반영됩니다.";saving=false;draw();return}
+  throw new Error("다른 사람이 동시에 수정 중입니다. 잠시 후 다시 저장해 주세요.")
+ }catch(err){vmsg=err.message||String(err);verr=true;saving=false;draw()}
+}
+fetch(GH.path+"?t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.json():{}).catch(()=>({})).then(j=>{VO=j||{};applyVO();draw()});
+window.addEventListener("beforeunload",ev=>{if(npend()){ev.preventDefault();ev.returnValue=""}});
 function exportXlsx(r,list,tag){
  if(typeof XLSX==="undefined"){alert("엑셀 모듈을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.");return}
  const ord=x=>["K","L","D"].indexOf(GR(x.s))*100+["T","B","D"].indexOf(x.c)*10+(PO.indexOf(x.s)+1||9);
@@ -103,9 +142,9 @@ function draw(){
  const pass=x=>(pg=="all"||GR(x.s)==pg)&&(cat=="all"||x.c==cat)&&(grp=="all"||x.g==grp);
  const l=it.filter(x=>pass(x)&&(!onlyNew||x.t=="n")),dl=(showDisc&&!onlyNew)?dc.filter(pass):[];
  h+=`<div class="bar grpbar">${["all","K","L","D"].filter(g=>g=="all"||gc(r,g)).map(g=>`<button data-pg="${g}" class="${pg==g?"on":""}">${g=="all"?"전체":GN[g].toUpperCase()} ${g=="all"?it.length:gc(r,g)}</button>`).join("")}</div>`;
- h+=`<div class="bar">${["all","T","B","D"].filter(k=>k=="all"||cnt(k)).map(k=>`<button data-c="${k}" class="sm ${cat==k?"on":""}">${k=="all"?"전체":CN[k]} ${cnt(k)}</button>`).join("")}<select id="gp"><option value="all">DPCI 전체</option>${Object.keys(gs).sort().map(k=>`<option value="${e(k)}">${e(k)} (${gs[k]})</option>`).join("")}</select>${r.base?"":`<button id="nw" class="sm ${onlyNew?"on":""}">NEW만 보기</button>`}<button id="xl" class="sm xl" title="지금 화면에 보이는 목록을 엑셀로 저장">⬇ 엑셀 다운로드 (${l.length})</button></div>`;
+ h+=`<div class="bar">${["all","T","B","D"].filter(k=>k=="all"||cnt(k)).map(k=>`<button data-c="${k}" class="sm ${cat==k?"on":""}">${k=="all"?"전체":CN[k]} ${cnt(k)}</button>`).join("")}<select id="gp"><option value="all">DPCI 전체</option>${Object.keys(gs).sort().map(k=>`<option value="${e(k)}">${e(k)} (${gs[k]})</option>`).join("")}</select>${r.base?"":`<button id="nw" class="sm ${onlyNew?"on":""}">NEW만 보기</button>`}<button id="xl" class="sm xl" title="지금 화면에 보이는 목록을 엑셀로 저장">⬇ 엑셀 다운로드 (${l.length})</button><button id="ve" class="sm ve ${edit?"on":""}" title="카드의 Vendor명을 직접 수정">✏️ Vendor 수정${edit?" 끝내기":""}</button>${edit||npend()?`<button id="sv" class="sm sv" ${npend()&&!saving?"":"disabled"}>💾 저장 (${npend()})</button>`:""}</div>${vmsg?`<div class="vmsg${verr?" err":""}">${e(vmsg)}</div>`:""}${edit?'<div class="note">Vendor 칸을 눌러 수정하거나 목록에서 고르세요. 다 고친 뒤 <b>💾 저장</b>을 눌러야 모두에게 반영됩니다.</div>':""}<datalist id="vlist">${VNAMES().map(v=>`<option value="${e(v)}">`).join("")}</datalist>`;
  const card=x=>{const img=x.iu?(isrc(x,r.id)?`<img loading="lazy" alt="" src="${isrc(x,r.id)}">`:`<div class="noimg">불러오는 중…</div>`):x.i?`<img class="ct" loading="lazy" alt="" src="data:image/jpeg;base64,${IM[x.i]}">`:`<div class="noimg">No image</div>`;
-  return `<div class="pc${x.disc?" disc":""}${x.t=="n"?" new":""}"><a class="pi" href="${tc(x)}" target="_blank" rel="noopener">${img}${x.disc?'<span class="bd d">Discontinued</span>':x.t=="n"?'<span class="bd n">NEW</span>':x.t=="s"?'<span class="bd s">DPCI 변경</span>':""}${x.v=="Sae-A"?'<span class="bd a">Sae-A</span>':""}</a><div class="pb"><h4><a href="${tc(x)}" target="_blank" rel="noopener">${e(x.p)}</a></h4><div class="m">${x.d||"DPCI 미확인"}${x.q?" · 이전 "+e(x.q):""}</div><div class="m f">${e(x.f)||""}</div><div class="pr">${x.r?"$"+x.r:"—"}</div><div class="m">${e(x.v)||"Vendor 미기재"}${x.vn?" · VN"+x.vn:""}</div>${x.clr?'<div class="m" style="color:var(--new)">T.com 클리어런스</div>':""}</div></div>`};
+  return `<div class="pc${x.disc?" disc":""}${(PEND[r.id]||{})[vk(x)]!==undefined?" ed":""}${x.t=="n"?" new":""}"><a class="pi" href="${tc(x)}" target="_blank" rel="noopener">${img}${x.disc?'<span class="bd d">Discontinued</span>':x.t=="n"?'<span class="bd n">NEW</span>':x.t=="s"?'<span class="bd s">DPCI 변경</span>':""}${x.v=="Sae-A"?'<span class="bd a">Sae-A</span>':""}</a><div class="pb"><h4><a href="${tc(x)}" target="_blank" rel="noopener">${e(x.p)}</a></h4><div class="m">${x.d||"DPCI 미확인"}${x.q?" · 이전 "+e(x.q):""}</div><div class="m f">${e(x.f)||""}</div><div class="pr">${x.r?"$"+x.r:"—"}</div>${edit&&!x.disc?`<input class="vi" list="vlist" data-k="${e(vk(x))}" value="${e(x.v||"")}" placeholder="Vendor 입력">${x.vn?`<div class="m">VN${x.vn}</div>`:""}`:`<div class="m">${e(x.v)||"Vendor 미기재"}${x.vn?" · VN"+x.vn:""}${(x.v||"")!==x._v0&&x._v0!==undefined?' <span class="vm" title="원래: '+e(x._v0||"미기재")+'">✎수정됨</span>':""}</div>`}${x.clr?'<div class="m" style="color:var(--new)">T.com 클리어런스</div>':""}</div></div>`};
  const ord=x=>(PO.indexOf(x.s)+1||9),grid=a=>`<div class="pg">${a.map(card).join("")}</div>`;
  if(!l.length&&!dl.length)h+="<p>조건에 맞는 스타일이 없습니다.</p>";
  ["K","L","D"].forEach(g=>{const gl=l.filter(x=>GR(x.s)==g),gd=dl.filter(x=>GR(x.s)==g);if(!gl.length&&!gd.length)return;
@@ -121,6 +160,9 @@ function draw(){
  const p=document.getElementById("gp");p.value=grp;p.onchange=()=>{grp=p.value;draw()};
  const n=document.getElementById("nw");if(n)n.onclick=()=>{onlyNew=!onlyNew;draw()};
  const xb=document.getElementById("xl");if(xb)xb.onclick=()=>exportXlsx(r,l,[pg!="all"?GN[pg].replace(" ",""):"",cat!="all"?CN[cat]:"",grp!="all"?grp:"",onlyNew?"NEW":""].filter(Boolean).join("_"));
+ const vb=document.getElementById("ve");if(vb)vb.onclick=()=>{edit=!edit;vmsg="";draw()};
+ const sb=document.getElementById("sv");if(sb)sb.onclick=saveVO;
+ out.querySelectorAll(".vi").forEach(i=>i.onchange=()=>{const k=i.dataset.k,x=r.items.find(y=>vk(y)==k),v=i.value.trim();if(!x)return;PEND[r.id]=PEND[r.id]||{};const base=(k in (VO[r.id]||{}))?VO[r.id][k]:x._v0;if(v===(base||""))delete PEND[r.id][k];else PEND[r.id][k]=v;vmsg="";const y=scrollY;applyVO();draw();scrollTo(0,y)});
  const ds=document.getElementById("dsc");if(ds)ds.onclick=()=>{showDisc=!showDisc;draw()};
  document.getElementById("hs").innerHTML=`<h2>회차 히스토리</h2><div class="tw"><table><tr><th>회차</th><th>비교 대상</th><th>스타일 수</th><th>Knit Top (NEW)</th><th>Leisure (NEW)</th><th>NEW</th><th>Sae-A</th></tr>${R.map(q=>`<tr><td>${q.id}</td><td>${q.base?"기준":e(q.cmp)}</td><td>${q.items.length}</td><td>${gc(q,"K")}${q.base?"":" ("+gc(q,"K",1)+")"}</td><td>${gc(q,"L")}${q.base?"":" ("+gc(q,"L",1)+")"}</td><td>${q.base?"—":cn(q,"n")}</td><td>${sa(q)}</td></tr>`).join("")}</table></div>`;
 }
