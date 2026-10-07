@@ -27,16 +27,24 @@ S = open(rp, encoding="utf-8").read()
 j = S.index("const DATA=") + len("const DATA=")
 DATA, n = json.JSONDecoder().raw_decode(S[j:])
 R = DATA["R"]
-VO = {}
-vp = os.path.join(A.repo, "vendors.json")
-if os.path.exists(vp):
-    try: VO = json.load(open(vp, encoding="utf-8"))
-    except Exception: VO = {}
+import copy
+ORIG = copy.deepcopy(DATA)  # 쓰기용(사이트 수정값은 edits.json 에 따로 두고 report.html 에 굽지 않음)
+def _load(name):
+    p = os.path.join(A.repo, name)
+    try: return json.load(open(p, encoding="utf-8")) if os.path.exists(p) else {}
+    except Exception: return {}
+EO = _load("edits.json")
+for rid, m in _load("vendors.json").items():  # 예전 Vendor 수정 파일 호환
+    for k, v in m.items(): EO.setdefault(rid, {}).setdefault(k, {"v": v})
 vk = lambda x: (x.get("d") or "") + "|" + x["p"]
-for r in R:  # 사이트에서 수정한 Vendor 반영
-    m = VO.get(r["id"], {})
-    for x in r["items"]:
-        if vk(x) in m: x["v"] = m[vk(x)]
+def apply_edits(rid, items):
+    m = EO.get(rid, {})
+    for x in items:
+        for f, v in m.get(vk(x), {}).items():
+            if v in ("", None, False): x.pop(f, None)
+            else: x[f] = v
+for r in R:  # 사이트에서 수정한 값(Vendor·프로그램·상품명 등)을 승계 판단에 반영
+    apply_edits(r["id"], r["items"])
 
 # ---------- 분류 함수 ----------
 low = lambda s: (s or "").lower()
@@ -97,7 +105,7 @@ for x in kept:
 
 # 이전 회차 인덱스 (이번 달 회차 제외)
 prev_rounds = [r for r in R if r["id"] < RID]
-same_month = next((r for r in R if r["id"] == RID), None)
+same_month = next((r for r in ORIG["R"] if r["id"] == RID), None)  # 같은 달은 원본값 기준 (사이트 수정값은 edits.json 이 계속 적용)
 def find_prev(key, dpcis, rounds):
     """같은 이름 + DPCI 앞5자리. 여러 개면 DPCI가 겹치는 것 → 가장 최근 회차 우선."""
     hits = [(i, x) for i, r in enumerate(rounds) for x in r["items"] if (nm(x["p"]), d5(x.get("d"))) == key]
@@ -155,16 +163,19 @@ drop = [{k: x.get(k) for k in ("p", "d", "c", "v", "r") if x.get(k) is not None}
 rnd = {"id": RID, "base": False,
        "cmp": f'{last["id"] if last else "-"} 대비 · NEW=이전 전체 회차에 없던 스타일 · T.com 자동 수집({A.date}) · DPCI {RU["dpci_prefix"]} + 니트 원단 (클리어런스 포함) · 가격: T.com 정가 · Vendor: 이전 회차·사이트 수정값 승계',
        "auto": True, "items": items, "drop": drop}
-if same_month: R[R.index(same_month)] = rnd
-else: R.append(rnd)
+OR = ORIG["R"]
+_i = next((i for i, r in enumerate(OR) if r["id"] == RID), None)
+if _i is not None: OR[_i] = rnd
+else: OR.append(rnd)
 
 # vendors.json 의 이번 달 수정값은 key(d|p)가 같으면 페이지가 계속 적용함 → 별도 처리 불필요
 
 GK = lambda x: "K" if x["s"] in ("CT","CS","CL","FT") else "L"
-st = dict(id=RID, all=len(items), nw=sum(x.get("t") == "n" for x in items),
-          k=sum(GK(x) == "K" for x in items), kn=sum(GK(x) == "K" and x.get("t") == "n" for x in items),
-          l=sum(GK(x) == "L" for x in items), ln=sum(GK(x) == "L" and x.get("t") == "n" for x in items),
-          d=0, sae=sum(x.get("v") == "Sae-A" for x in items), auto=True)
+_view = copy.deepcopy(items); apply_edits(RID, _view); _view = [x for x in _view if not x.get("x")]  # 사이트 수정값 반영한 집계
+st = dict(id=RID, all=len(_view), nw=sum(x.get("t") == "n" for x in _view),
+          k=sum(GK(x) == "K" for x in _view), kn=sum(GK(x) == "K" and x.get("t") == "n" for x in _view),
+          l=sum(GK(x) == "L" for x in _view), ln=sum(GK(x) == "L" and x.get("t") == "n" for x in _view),
+          d=0, sae=sum(x.get("v") == "Sae-A" for x in _view), auto=True)
 
 summary = dict(round=RID, date=A.date, replaced=bool(same_month), stats=st,
                new=[f'{x["p"]} ({x["d"]}) {x.get("v","Vendor 미기재")}' for x in items if x.get("t") == "n"],
@@ -180,7 +191,7 @@ if A.dry:
     print(json.dumps(st, ensure_ascii=False)); sys.exit(0)
 
 # ---------- 쓰기 ----------
-S2 = S[:j] + json.dumps(DATA, ensure_ascii=False, separators=(",", ":")) + S[j + n:]
+S2 = S[:j] + json.dumps(ORIG, ensure_ascii=False, separators=(",", ":")) + S[j + n:]
 S2 = re.sub(r"2026-01 ~ \d{4}-\d{2}|(\d{4}-\d{2}) ~ \d{4}-\d{2}(?=</p>)", lambda m: m.group(0)[:10] + RID, S2, count=1)
 open(rp, "w", encoding="utf-8").write(S2)
 

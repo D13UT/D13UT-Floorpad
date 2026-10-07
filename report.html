@@ -55,9 +55,9 @@ button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
 .pb h4{margin:0 0 3px;font-size:13.5px;line-height:1.3}.pb h4 a{color:inherit;text-decoration:none}.pb h4 a:hover{text-decoration:underline}
 .pb .m{font-size:11.5px;color:var(--mut);line-height:1.35}.pb .f{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.pb .pr{font-weight:800;font-size:15px;margin-top:3px}
 @media(max-width:560px){.pg{grid-template-columns:repeat(2,1fr);gap:10px}}
-button.ve{background:#fff;color:var(--navy);border-color:var(--gold);font-weight:600}button.ve.on{background:var(--gold);color:#fff}button.sv{background:var(--sae);color:#fff;border-color:var(--sae);font-weight:600}button.sv:disabled{opacity:.45}
-.vi{width:100%;box-sizing:border-box;font:inherit;font-size:12px;padding:4px 6px;border:1px solid var(--gold);border-radius:6px;background:#fffaf2}.pc.ed{outline:2px solid var(--gold)}.vm{color:var(--gold);font-weight:600}
-.vbox{position:fixed;inset:0;background:rgba(2,39,59,.45);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}.vbox>div{background:#fff;border-radius:12px;padding:20px;max-width:420px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.25)}.vbox h3{margin:0 0 8px;color:var(--navy)}.vbox p{font-size:13px;color:var(--mut);margin:0 0 12px;line-height:1.5}.vbox input[type=password]{width:100%;box-sizing:border-box;padding:8px;border:1px solid var(--line);border-radius:6px;font:inherit}.vbox .bt{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+button.ve{background:#fff;color:var(--navy);border-color:var(--gold);font-weight:600}button.ve.on{background:var(--gold);color:#fff}button.sv{background:var(--sae);color:#fff;border-color:var(--sae);font-weight:600}button.sv:disabled{opacity:.45}button.pw{background:#fff;color:var(--mut)}
+.pc.ed{outline:2px solid var(--gold)}.pc.hid{opacity:.45}.vm{color:var(--gold);font-weight:600}.edb{position:absolute;left:8px;bottom:8px;background:var(--gold);color:#fff;border:0;border-radius:6px;padding:4px 10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}.editing .pc{cursor:pointer}.editing .pi{position:relative}
+.vbox{position:fixed;inset:0;background:rgba(2,39,59,.5);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}.vbox>div{background:var(--card);color:var(--ink);border-radius:12px;padding:20px;max-width:460px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,.25)}.vbox h3{margin:0 0 8px;color:var(--navy)}.vbox p{font-size:13px;color:var(--mut);margin:0 0 12px;line-height:1.5}.vbox label{display:block;font-size:12px;color:var(--mut);margin:10px 0 3px}.vbox label.ck{display:flex;gap:6px;align-items:center;color:var(--ink);font-size:13px}.vbox input:not([type=checkbox]),.vbox select{width:100%;box-sizing:border-box;padding:7px 8px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:14px;background:var(--card);color:var(--ink)}.vbox .row2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}.vbox .bt{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}.vbox .bt .l{margin-right:auto}.vbox .er{color:var(--new);font-size:13px;margin-top:8px;min-height:1em}
 .vmsg{margin:0 0 12px;padding:8px 12px;border-radius:8px;font-size:13px;background:#eef6f4;color:var(--sae)}.vmsg.err{background:#fbeeea;color:var(--new)}
 button.xl{margin-left:auto;background:var(--navy);color:#fff;border-color:var(--navy);font-weight:600}
 footer{margin-top:30px;color:var(--mut);font-size:12.5px}
@@ -78,39 +78,64 @@ const tc=x=>x.u||"https://www.target.com/s?searchTerm="+encodeURIComponent(x.d||
 const stat=(a,b)=>`<div><b>${a}</b><span>${b}</span></div>`;
 const cn=(r,t)=>r.items.filter(x=>x.t==t).length,sa=r=>r.items.filter(x=>x.v=="Sae-A").length;
 
-// ---- Vendor 수정 (사이트에서 직접) : vendors.json 에 저장 ----
-const GH={owner:"d13ut",repo:"D13UT-Floorpad",path:"vendors.json",branch:"main"};
-let VO={},PEND={},edit=false,vmsg="",verr=false,saving=false;
-const vk=x=>(x.d||"")+"|"+x.p;
-function applyVO(){R.forEach(r=>{const m=VO[r.id]||{},p=PEND[r.id]||{};r.items.forEach(x=>{if(x._v0===undefined)x._v0=x.v||"";const k=vk(x);x.v=(k in p)?p[k]:(k in m)?m[k]:x._v0;if(!x.v)delete x.v})})}
+// ================= Edit (비밀번호 보호) =================
+// 수정 내용은 저장소의 edits.json 에, 저장 권한(GitHub 토큰)은 비밀번호로 암호화해 edit_key.json 에 보관
+const GH={owner:"d13ut",repo:"D13UT-Floorpad",branch:"main"},KEYF="edit_key.json",EDF="edits.json";
+const EF=["p","d","q","c","s","t","f","r","v","vn","x"];
+let EO={},PEND={},edit=false,vmsg="",verr=false,saving=false,TOK="";
+const ekey=x=>x._k||((x.d||"")+"|"+x.p);
+function applyE(){R.forEach(r=>{if(!r._all)r._all=r.items;const m=EO[r.id]||{},p=PEND[r.id]||{};
+ r._all.forEach(x=>{if(!x._o){x._o={};EF.forEach(f=>x._o[f]=x[f]);x._k=(x.d||"")+"|"+x.p}
+  EF.forEach(f=>{if(x._o[f]===undefined)delete x[f];else x[f]=x._o[f]});
+  const e=(x._k in p)?p[x._k]:(m[x._k]||{});
+  Object.entries(e).forEach(([f,v])=>{if(v===""||v==null||v===false||v===0&&f!="r")delete x[f];else x[f]=v});
+  x._ed=Object.keys(e).length>0;x._pd=(x._k in p)});
+ r.items=edit?r._all:r._all.filter(x=>!x.x)})}
 const npend=()=>Object.values(PEND).reduce((s,m)=>s+Object.keys(m).length,0);
-const VNAMES=()=>[...new Set(["Sae-A","Apparel Links","Shin Won","Lamamba","Avalon","Decor","Cobest HK","Ralsey","Cobalt",...R.flatMap(r=>r.items.map(x=>x.v).filter(Boolean))])].sort();
+const VNAMES=()=>[...new Set(["Sae-A","Apparel Links","Shin Won","Lamamba","Avalon","Decor","Cobest HK","Ralsey","Cobalt",...R.flatMap(r=>(r._all||r.items).map(x=>x.v).filter(Boolean))])].sort();
 const b64e=s=>btoa(unescape(encodeURIComponent(s))),b64d=s=>decodeURIComponent(escape(atob(s.replace(/\s/g,""))));
-function getTok(){try{return localStorage.getItem("ut_gh_tok")||sessionStorage.getItem("ut_gh_tok")||""}catch(_){return window._tok||""}}
-function askTok(){return new Promise(res=>{const d=document.createElement("div");d.className="vbox";d.innerHTML=`<div><h3>저장 권한 확인</h3><p>Vendor 수정은 GitHub 저장소에 기록됩니다. 담당자에게 받은 <b>GitHub 토큰</b>을 붙여넣어 주세요. (토큰은 이 브라우저에만 보관되고 사이트에는 공개되지 않습니다)</p><input type="password" id="tk" placeholder="github_pat_..." autocomplete="off"><label style="display:block;font-size:13px;margin-top:10px"><input type="checkbox" id="tr" checked> 이 PC에서 기억하기</label><div class="bt"><button id="tc">취소</button><button id="tok" class="sv">확인</button></div></div>`;document.body.appendChild(d);const i=d.querySelector("#tk");i.focus();
- const done=v=>{const t=(v||"").trim();if(t){window._tok=t;try{(d.querySelector("#tr").checked?localStorage:sessionStorage).setItem("ut_gh_tok",t)}catch(_){}}d.remove();res(t)};
- d.querySelector("#tc").onclick=()=>done("");d.querySelector("#tok").onclick=()=>done(i.value);i.onkeydown=ev=>{if(ev.key=="Enter")done(i.value)}})}
-function forgetTok(){try{localStorage.removeItem("ut_gh_tok");sessionStorage.removeItem("ut_gh_tok")}catch(_){}window._tok=""}
-async function saveVO(){
- if(!npend()||saving)return;let tok=getTok()||await askTok();if(!tok)return;
- saving=true;vmsg="저장 중…";verr=false;draw();
- const api=`https://api.github.com/repos/${GH.owner}/${GH.repo}/contents/${GH.path}`,H={Authorization:"Bearer "+tok,Accept:"application/vnd.github+json"};
- try{
-  for(let t=0;t<3;t++){
-   const g=await fetch(api+"?ref="+GH.branch+"&t="+Date.now(),{headers:H,cache:"no-store"});
-   if(g.status==401||g.status==403){forgetTok();throw new Error("토큰이 올바르지 않거나 권한이 없습니다. 다시 저장을 눌러 토큰을 입력해 주세요.")}
-   let sha,cur={};if(g.ok){const j=await g.json();sha=j.sha;try{cur=JSON.parse(b64d(j.content))}catch(_){}}else if(g.status!=404)throw new Error("GitHub 응답 오류 ("+g.status+")");
-   const log=[];Object.entries(PEND).forEach(([rid,m])=>Object.entries(m).forEach(([k,v])=>{cur[rid]=cur[rid]||{};const x=(R.find(r=>r.id==rid)||{items:[]}).items.find(y=>vk(y)==k);if(x&&v===x._v0)delete cur[rid][k];else cur[rid][k]=v;log.push(rid+" "+k.split("|")[0]+" → "+(v||"(빈칸)"))}));
-   const body={message:"Vendor 수정 ("+log.length+"건): "+log.slice(0,5).join(", ")+(log.length>5?" 외":""),content:b64e(JSON.stringify(cur,null,1)),branch:GH.branch};if(sha)body.sha=sha;
-   const p=await fetch(api,{method:"PUT",headers:H,body:JSON.stringify(body)});
-   if(p.status==409||p.status==422&&sha){continue}
-   if(p.status==401||p.status==403){forgetTok();throw new Error("토큰에 쓰기 권한이 없습니다 (Contents: Read and write 필요).")}
-   if(!p.ok)throw new Error("저장 실패 ("+p.status+")");
-   VO=cur;PEND={};applyVO();vmsg="✔ "+log.length+"건 저장됨 — 1~2분 후 모든 사용자 화면에 반영됩니다.";saving=false;draw();return}
-  throw new Error("다른 사람이 동시에 수정 중입니다. 잠시 후 다시 저장해 주세요.")
- }catch(err){vmsg=err.message||String(err);verr=true;saving=false;draw()}
-}
-fetch(GH.path+"?t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.json():{}).catch(()=>({})).then(j=>{VO=j||{};applyVO();draw()});
+const TE=new TextEncoder(),u8b=u=>btoa(String.fromCharCode(...u)),bu8=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function kdf(pw,salt){const k=await crypto.subtle.importKey("raw",TE.encode(pw),"PBKDF2",false,["deriveKey"]);return crypto.subtle.deriveKey({name:"PBKDF2",salt,iterations:250000,hash:"SHA-256"},k,{name:"AES-GCM",length:256},false,["encrypt","decrypt"])}
+async function seal(tok,pw){const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));const ct=new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv},await kdf(pw,salt),TE.encode(tok)));return{v:1,salt:u8b(salt),iv:u8b(iv),ct:u8b(ct)}}
+async function unseal(o,pw){const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:bu8(o.iv)},await kdf(pw,bu8(o.salt)),bu8(o.ct));return new TextDecoder().decode(pt)}
+const API=p=>`https://api.github.com/repos/${GH.owner}/${GH.repo}/contents/${p}`,AH=t=>({Authorization:"Bearer "+t,Accept:"application/vnd.github+json"});
+async function ghGet(p,t){const g=await fetch(API(p)+"?ref="+GH.branch+"&t="+Date.now(),{headers:AH(t),cache:"no-store"});if(g.status==404)return{sha:null,data:null};if(g.status==401||g.status==403)throw new Error("GitHub 토큰이 만료됐거나 권한이 없습니다 (관리자에게 문의).");if(!g.ok)throw new Error("GitHub 응답 오류 ("+g.status+")");const j=await g.json();let d=null;try{d=JSON.parse(b64d(j.content))}catch(_){}return{sha:j.sha,data:d}}
+async function ghPut(p,t,obj,sha,msg){const b={message:msg,content:b64e(JSON.stringify(obj,null,1)),branch:GH.branch};if(sha)b.sha=sha;const r=await fetch(API(p),{method:"PUT",headers:AH(t),body:JSON.stringify(b)});if(r.status==409||r.status==422&&sha)return false;if(r.status==401||r.status==403)throw new Error("토큰에 쓰기 권한이 없습니다 (Contents: Read and write 필요).");if(!r.ok)throw new Error("저장 실패 ("+r.status+")");return true}
+function box(html,onOk){const d=document.createElement("div");d.className="vbox";d.innerHTML="<div>"+html+"</div>";document.body.appendChild(d);const q=s=>d.querySelector(s),close=()=>d.remove(),er=m=>{const z=q(".er");if(z)z.textContent=m};
+ d.addEventListener("keydown",ev=>{if(ev.key=="Escape")close();if(ev.key=="Enter"&&ev.target.tagName=="INPUT"&&q("[data-ok]"))q("[data-ok]").click()});
+ d.querySelectorAll("[data-x]").forEach(b=>b.onclick=close);const ok=q("[data-ok]");if(ok)ok.onclick=async()=>{ok.disabled=true;er("");try{if(await onOk(q,er)!==false)close()}catch(e){er(e.message||String(e))}ok.disabled=false};const f=q("input");if(f)f.focus();return{q,close}}
+async function unlock(){if(TOK)return true;let kf=null;try{const r=await fetch(KEYF+"?t="+Date.now(),{cache:"no-store"});if(r.ok)kf=await r.json()}catch(_){}
+ return new Promise(res=>{let done=false;const fin=v=>{if(!done){done=true;res(v)}};
+ if(kf&&kf.ct){const b=box(`<h3>🔒 Edit 비밀번호</h3><p>수정 권한이 있는 담당자만 편집할 수 있습니다.</p><label>비밀번호</label><input type="password" id="pw" autocomplete="current-password"><div class="er"></div><div class="bt"><button data-x>취소</button><button data-ok class="sv">확인</button></div>`,async(q,er)=>{try{TOK=await unseal(kf,q("#pw").value)}catch(_){er("비밀번호가 맞지 않습니다.");return false}fin(true)});b.q("[data-x]").addEventListener("click",()=>fin(false))}
+ else{let old="";try{old=localStorage.getItem("ut_gh_tok")||""}catch(_){}
+  const b=box(`<h3>🔑 Edit 처음 설정</h3><p>한 번만 하면 됩니다. GitHub 토큰은 아래 비밀번호로 암호화되어 저장되고, 이후에는 <b>비밀번호만</b> 입력하면 편집할 수 있습니다.</p><label>GitHub 토큰 (github_pat_…)</label><input type="password" id="tk" value="${e(old)}" autocomplete="off"><label>새 비밀번호 (8자 이상)</label><input type="password" id="p1" autocomplete="new-password"><label>비밀번호 확인</label><input type="password" id="p2" autocomplete="new-password"><div class="er"></div><div class="bt"><button data-x>취소</button><button data-ok class="sv">설정</button></div>`,async(q,er)=>{const t=q("#tk").value.trim(),p1=q("#p1").value;if(!t){er("토큰을 입력해 주세요.");return false}if(p1.length<8){er("비밀번호는 8자 이상으로 해 주세요.");return false}if(p1!==q("#p2").value){er("비밀번호 확인이 일치하지 않습니다.");return false}
+   const k=await ghGet(KEYF,t);await ghPut(KEYF,t,await seal(t,p1),k.sha,"Edit 비밀번호 설정");TOK=t;try{localStorage.removeItem("ut_gh_tok")}catch(_){}vmsg="✔ Edit 비밀번호가 설정되었습니다.";verr=false;fin(true)});b.q("[data-x]").addEventListener("click",()=>fin(false))}})}
+function changePw(){box(`<h3>🔑 비밀번호 변경</h3><label>새 비밀번호 (8자 이상)</label><input type="password" id="p1" autocomplete="new-password"><label>비밀번호 확인</label><input type="password" id="p2" autocomplete="new-password"><div class="er"></div><div class="bt"><button data-x>취소</button><button data-ok class="sv">변경</button></div>`,async(q,er)=>{const p1=q("#p1").value;if(p1.length<8){er("비밀번호는 8자 이상으로 해 주세요.");return false}if(p1!==q("#p2").value){er("비밀번호 확인이 일치하지 않습니다.");return false}const k=await ghGet(KEYF,TOK);await ghPut(KEYF,TOK,await seal(TOK,p1),k.sha,"Edit 비밀번호 변경");vmsg="✔ 비밀번호가 변경되었습니다. 다른 담당자에게도 알려 주세요.";verr=false;draw()})}
+const PO_OPT=[["CT","Core Tank"],["CS","Core SS"],["CL","Core LS"],["FT","Fashion Top"],["L","Leisure"]];
+function openEdit(r,x){const o=x._o,cur=x,sel=(id,opts,v)=>`<select id="${id}">${opts.map(([k,l])=>`<option value="${k}"${k==v?" selected":""}>${l}</option>`).join("")}</select>`;
+ const po=PO_OPT.some(z=>z[0]==cur.s)?PO_OPT:PO_OPT.concat([[cur.s,SM[cur.s]||cur.s]]);
+ const b=box(`<h3>✎ 스타일 정보 수정</h3><p>${e(r.id)} 회차 · 원래: ${e(o.p)} (${e(o.d||"DPCI 없음")})</p>
+ <label>상품명</label><input id="ep" value="${e(cur.p)}"><div class="row2"><div><label>DPCI</label><input id="ed" value="${e(cur.d||"")}" placeholder="013-00-0000"></div><div><label>이전 DPCI</label><input id="eq" value="${e(cur.q||"")}"></div>
+ <div><label>구분</label>${sel("ec",[["T","Tops"],["B","Bottoms"],["D","Dress"]],cur.c)}</div><div><label>프로그램</label>${sel("es",po,cur.s)}</div>
+ <div><label>Vendor</label><input id="ev" list="vlist" value="${e(cur.v||"")}"></div><div><label>라벨 VN</label><input id="evn" value="${e(cur.vn||"")}"></div>
+ <div><label>Retail ($)</label><input id="er" type="number" step="0.01" min="0" value="${cur.r==null?"":cur.r}"></div><div></div></div>
+ <label>Fabric</label><input id="ef" value="${e(cur.f||"")}">
+ <label class="ck"><input type="checkbox" id="et"${cur.t=="n"?" checked":""}> NEW 스타일</label><label class="ck"><input type="checkbox" id="ex"${cur.x?" checked":""}> 리스트에서 숨기기 (예: 우븐인데 잘못 포함된 경우)</label>
+ <div class="er"></div><div class="bt"><button class="l" id="rv">원래대로</button><button data-x>취소</button><button data-ok class="sv">적용</button></div>`,async q=>{
+  const nv={p:q("#ep").value.trim(),d:q("#ed").value.trim(),q:q("#eq").value.trim(),c:q("#ec").value,s:q("#es").value,v:q("#ev").value.trim(),vn:q("#evn").value.trim().replace(/^vn/i,""),r:q("#er").value===""?"":+q("#er").value,f:q("#ef").value.trim(),t:q("#et").checked?"n":"",x:q("#ex").checked?1:""};
+  if(!nv.p)throw new Error("상품명은 비울 수 없습니다.");
+  const diff={};Object.entries(nv).forEach(([f,v])=>{const ov=o[f]===undefined?"":o[f];if(String(v)!==String(ov))diff[f]=v});
+  const saved=(EO[r.id]||{})[x._k]||{};PEND[r.id]=PEND[r.id]||{};
+  if(JSON.stringify(diff)===JSON.stringify(saved))delete PEND[r.id][x._k];else PEND[r.id][x._k]=diff;
+  vmsg="";const y=scrollY;applyE();draw();scrollTo(0,y)});
+ b.q("#rv").onclick=()=>{PEND[r.id]=PEND[r.id]||{};if((EO[r.id]||{})[x._k])PEND[r.id][x._k]={};else delete PEND[r.id][x._k];b.close();const y=scrollY;applyE();draw();scrollTo(0,y)}}
+async function saveE(){if(!npend()||saving)return;if(!await unlock())return;saving=true;vmsg="저장 중…";verr=false;draw();
+ try{for(let t=0;t<3;t++){const g=await ghGet(EDF,TOK);const cur=g.data||{};const log=[];
+   Object.entries(PEND).forEach(([rid,m])=>Object.entries(m).forEach(([k,d])=>{cur[rid]=cur[rid]||{};if(Object.keys(d).length)cur[rid][k]=d;else delete cur[rid][k];log.push(rid+" "+(k.split("|")[0]||k.split("|")[1])+(Object.keys(d).length?" ("+Object.keys(d).join(",")+")":" 원복"))}));
+   if(await ghPut(EDF,TOK,cur,g.sha,"사이트 Edit ("+log.length+"건): "+log.slice(0,5).join(", ")+(log.length>5?" 외":""))){EO=cur;PEND={};applyE();vmsg="✔ "+log.length+"건 저장됨 — 1~2분 후 모든 사용자 화면에 반영됩니다.";saving=false;draw();return}}
+  throw new Error("다른 사람이 동시에 수정 중입니다. 잠시 후 다시 저장해 주세요.")}catch(err){vmsg=err.message||String(err);verr=true;saving=false;draw()}}
+Promise.all([EDF,"vendors.json"].map(f=>fetch(f+"?t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.json():{}).catch(()=>({})))).then(([ed,vd])=>{EO=ed||{};Object.entries(vd||{}).forEach(([rid,m])=>Object.entries(m).forEach(([k,v])=>{EO[rid]=EO[rid]||{};if(!EO[rid][k])EO[rid][k]={v}}));applyE();draw()});
+applyE();
 window.addEventListener("beforeunload",ev=>{if(npend()){ev.preventDefault();ev.returnValue=""}});
 function exportXlsx(r,list,tag){
  if(typeof XLSX==="undefined"){alert("엑셀 모듈을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.");return}
@@ -142,9 +167,9 @@ function draw(){
  const pass=x=>(pg=="all"||GR(x.s)==pg)&&(cat=="all"||x.c==cat)&&(grp=="all"||x.g==grp);
  const l=it.filter(x=>pass(x)&&(!onlyNew||x.t=="n")),dl=(showDisc&&!onlyNew)?dc.filter(pass):[];
  h+=`<div class="bar grpbar">${["all","K","L","D"].filter(g=>g=="all"||gc(r,g)).map(g=>`<button data-pg="${g}" class="${pg==g?"on":""}">${g=="all"?"전체":GN[g].toUpperCase()} ${g=="all"?it.length:gc(r,g)}</button>`).join("")}</div>`;
- h+=`<div class="bar">${["all","T","B","D"].filter(k=>k=="all"||cnt(k)).map(k=>`<button data-c="${k}" class="sm ${cat==k?"on":""}">${k=="all"?"전체":CN[k]} ${cnt(k)}</button>`).join("")}<select id="gp"><option value="all">DPCI 전체</option>${Object.keys(gs).sort().map(k=>`<option value="${e(k)}">${e(k)} (${gs[k]})</option>`).join("")}</select>${r.base?"":`<button id="nw" class="sm ${onlyNew?"on":""}">NEW만 보기</button>`}<button id="xl" class="sm xl" title="지금 화면에 보이는 목록을 엑셀로 저장">⬇ 엑셀 다운로드 (${l.length})</button><button id="ve" class="sm ve ${edit?"on":""}" title="카드의 Vendor명을 직접 수정">✏️ Vendor 수정${edit?" 끝내기":""}</button>${edit||npend()?`<button id="sv" class="sm sv" ${npend()&&!saving?"":"disabled"}>💾 저장 (${npend()})</button>`:""}</div>${vmsg?`<div class="vmsg${verr?" err":""}">${e(vmsg)}</div>`:""}${edit?'<div class="note">Vendor 칸을 눌러 수정하거나 목록에서 고르세요. 다 고친 뒤 <b>💾 저장</b>을 눌러야 모두에게 반영됩니다.</div>':""}<datalist id="vlist">${VNAMES().map(v=>`<option value="${e(v)}">`).join("")}</datalist>`;
+ h+=`<div class="bar">${["all","T","B","D"].filter(k=>k=="all"||cnt(k)).map(k=>`<button data-c="${k}" class="sm ${cat==k?"on":""}">${k=="all"?"전체":CN[k]} ${cnt(k)}</button>`).join("")}<select id="gp"><option value="all">DPCI 전체</option>${Object.keys(gs).sort().map(k=>`<option value="${e(k)}">${e(k)} (${gs[k]})</option>`).join("")}</select>${r.base?"":`<button id="nw" class="sm ${onlyNew?"on":""}">NEW만 보기</button>`}<button id="xl" class="sm xl" title="지금 화면에 보이는 목록을 엑셀로 저장">⬇ 엑셀 다운로드 (${l.length})</button><button id="ve" class="sm ve ${edit?"on":""}" title="스타일 정보 수정 (비밀번호 필요)">✏️ ${edit?"Edit 끝내기":"Edit"}</button>${edit||npend()?`<button id="sv" class="sm sv" ${npend()&&!saving?"":"disabled"}>💾 저장 (${npend()})</button>`:""}${edit&&TOK?'<button id="pwc" class="sm pw">🔑 비밀번호 변경</button>':""}</div>${vmsg?`<div class="vmsg${verr?" err":""}">${e(vmsg)}</div>`:""}${edit?'<div class="note">카드를 누르면 상품명·DPCI·Vendor 등을 수정할 수 있습니다. 숨긴 스타일은 Edit 중에만 흐리게 보입니다. 다 고친 뒤 <b>💾 저장</b>을 눌러야 모두에게 반영됩니다.</div>':""}<datalist id="vlist">${VNAMES().map(v=>`<option value="${e(v)}">`).join("")}</datalist>`;
  const card=x=>{const img=x.iu?(isrc(x,r.id)?`<img loading="lazy" alt="" src="${isrc(x,r.id)}">`:`<div class="noimg">불러오는 중…</div>`):x.i?`<img class="ct" loading="lazy" alt="" src="data:image/jpeg;base64,${IM[x.i]}">`:`<div class="noimg">No image</div>`;
-  return `<div class="pc${x.disc?" disc":""}${(PEND[r.id]||{})[vk(x)]!==undefined?" ed":""}${x.t=="n"?" new":""}"><a class="pi" href="${tc(x)}" target="_blank" rel="noopener">${img}${x.disc?'<span class="bd d">Discontinued</span>':x.t=="n"?'<span class="bd n">NEW</span>':x.t=="s"?'<span class="bd s">DPCI 변경</span>':""}${x.v=="Sae-A"?'<span class="bd a">Sae-A</span>':""}</a><div class="pb"><h4><a href="${tc(x)}" target="_blank" rel="noopener">${e(x.p)}</a></h4><div class="m">${x.d||"DPCI 미확인"}${x.q?" · 이전 "+e(x.q):""}</div><div class="m f">${e(x.f)||""}</div><div class="pr">${x.r?"$"+x.r:"—"}</div>${edit&&!x.disc?`<input class="vi" list="vlist" data-k="${e(vk(x))}" value="${e(x.v||"")}" placeholder="Vendor 입력">${x.vn?`<div class="m">VN${x.vn}</div>`:""}`:`<div class="m">${e(x.v)||"Vendor 미기재"}${x.vn?" · VN"+x.vn:""}${(x.v||"")!==x._v0&&x._v0!==undefined?' <span class="vm" title="원래: '+e(x._v0||"미기재")+'">✎수정됨</span>':""}</div>`}${x.clr?'<div class="m" style="color:var(--new)">T.com 클리어런스</div>':""}</div></div>`};
+  return `<div data-k="${e(ekey(x))}" class="pc${x.disc?" disc":""}${x._pd?" ed":""}${x.x?" hid":""}${x.t=="n"?" new":""}"><a class="pi" href="${tc(x)}" target="_blank" rel="noopener">${img}${x.disc?'<span class="bd d">Discontinued</span>':x.t=="n"?'<span class="bd n">NEW</span>':x.t=="s"?'<span class="bd s">DPCI 변경</span>':""}${x.v=="Sae-A"?'<span class="bd a">Sae-A</span>':""}${edit&&!x.disc?'<button class="edb">✎ 편집</button>':""}</a><div class="pb"><h4><a href="${tc(x)}" target="_blank" rel="noopener">${e(x.p)}</a></h4><div class="m">${x.d||"DPCI 미확인"}${x.q?" · 이전 "+e(x.q):""}</div><div class="m f">${e(x.f)||""}</div><div class="pr">${x.r?"$"+x.r:"—"}</div><div class="m">${e(x.v)||"Vendor 미기재"}${x.vn?" · VN"+x.vn:""}${x._ed?' <span class="vm" title="사이트에서 수정됨">✎수정됨</span>':""}${x.x?' <span class="vm">숨김</span>':""}</div>${x.clr?'<div class="m" style="color:var(--new)">T.com 클리어런스</div>':""}</div></div>`};
  const ord=x=>(PO.indexOf(x.s)+1||9),grid=a=>`<div class="pg">${a.map(card).join("")}</div>`;
  if(!l.length&&!dl.length)h+="<p>조건에 맞는 스타일이 없습니다.</p>";
  ["K","L","D"].forEach(g=>{const gl=l.filter(x=>GR(x.s)==g),gd=dl.filter(x=>GR(x.s)==g);if(!gl.length&&!gd.length)return;
@@ -160,9 +185,10 @@ function draw(){
  const p=document.getElementById("gp");p.value=grp;p.onchange=()=>{grp=p.value;draw()};
  const n=document.getElementById("nw");if(n)n.onclick=()=>{onlyNew=!onlyNew;draw()};
  const xb=document.getElementById("xl");if(xb)xb.onclick=()=>exportXlsx(r,l,[pg!="all"?GN[pg].replace(" ",""):"",cat!="all"?CN[cat]:"",grp!="all"?grp:"",onlyNew?"NEW":""].filter(Boolean).join("_"));
- const vb=document.getElementById("ve");if(vb)vb.onclick=()=>{edit=!edit;vmsg="";draw()};
- const sb=document.getElementById("sv");if(sb)sb.onclick=saveVO;
- out.querySelectorAll(".vi").forEach(i=>i.onchange=()=>{const k=i.dataset.k,x=r.items.find(y=>vk(y)==k),v=i.value.trim();if(!x)return;PEND[r.id]=PEND[r.id]||{};const base=(k in (VO[r.id]||{}))?VO[r.id][k]:x._v0;if(v===(base||""))delete PEND[r.id][k];else PEND[r.id][k]=v;vmsg="";const y=scrollY;applyVO();draw();scrollTo(0,y)});
+ out.classList.toggle("editing",edit);
+ const vb=document.getElementById("ve");if(vb)vb.onclick=async()=>{if(!edit&&!await unlock())return;edit=!edit;if(!edit)vmsg="";applyE();draw()};
+ const sb=document.getElementById("sv");if(sb)sb.onclick=saveE;const pc=document.getElementById("pwc");if(pc)pc.onclick=changePw;
+ if(edit)out.querySelectorAll(".pc[data-k]").forEach(c=>c.addEventListener("click",ev=>{ev.preventDefault();ev.stopPropagation();const x=(r._all||r.items).find(y=>ekey(y)==c.dataset.k);if(x&&!x.disc)openEdit(r,x)},true));
  const ds=document.getElementById("dsc");if(ds)ds.onclick=()=>{showDisc=!showDisc;draw()};
  document.getElementById("hs").innerHTML=`<h2>회차 히스토리</h2><div class="tw"><table><tr><th>회차</th><th>비교 대상</th><th>스타일 수</th><th>Knit Top (NEW)</th><th>Leisure (NEW)</th><th>NEW</th><th>Sae-A</th></tr>${R.map(q=>`<tr><td>${q.id}</td><td>${q.base?"기준":e(q.cmp)}</td><td>${q.items.length}</td><td>${gc(q,"K")}${q.base?"":" ("+gc(q,"K",1)+")"}</td><td>${gc(q,"L")}${q.base?"":" ("+gc(q,"L",1)+")"}</td><td>${q.base?"—":cn(q,"n")}</td><td>${sa(q)}</td></tr>`).join("")}</table></div>`;
 }
