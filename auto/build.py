@@ -104,8 +104,23 @@ for row in raw:
     (kept if ok else dropped).append(dict(tcin=tcin, d=dpci, p=title, it=itype, fab=fab, mat=mat, r=reg, g=guest, clr=clr, why=why))
 
 groups = collections.OrderedDict()
+_img = {}
+def _known(k):  # 이전 회차에 있던 이름인지
+    return any((nm(y["p"]), d5(y.get("d"))) == k for r in R for y in r["items"])
 for x in kept:
-    groups.setdefault((nm(x["p"]), d5(x["d"])), []).append(x)
+    k = (nm(x["p"]), d5(x["d"]))
+    ik = (x["g"], d5(x["d"])) if x["g"] else None
+    if ik and ik in _img and _img[ik] != k:  # 같은 사진 + 같은 DPCI 앞5자리 = T.com 중복 등록 → 하나로 합침
+        o = _img[ik]
+        if _known(k) and not _known(o):  # 이전 회차 이름을 대표로
+            groups[k] = groups.pop(o, []); _img[ik] = k
+            for kk, vv in list(_img.items()):
+                if vv == o: _img[kk] = k
+        else:
+            k = o
+    elif ik:
+        _img.setdefault(ik, k)
+    groups.setdefault(k, []).append(x)
 
 # 이전 회차 인덱스 (이번 달 회차 제외)
 prev_rounds = [r for r in R if r["id"] < RID]
