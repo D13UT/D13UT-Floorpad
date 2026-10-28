@@ -33,7 +33,9 @@
   "shirtdress",
   "button-down shirt",
   "button-up shirt",
-  "collared"
+  "collared",
+  "fairisle",
+  "fair isle"
  ],
  "woven_fabrics": [
   "woven",
@@ -169,6 +171,16 @@
    "v": "Sae-A",
    "not_new": true,
    "note": "사용자 확인: 기존 Sae-A 스타일 (2026-10-01)"
+  },
+  "013-08-5347": {
+   "p": "Women's Heritage Fairisle Dress",
+   "exclude": true,
+   "note": "사용자 확인: 스웨터류 제외 (2026-10-28)"
+  },
+  "013-08-5348": {
+   "p": "Women's Heritage Fairisle Dress",
+   "exclude": true,
+   "note": "사용자 확인: 스웨터류 제외 (2026-10-28)"
   }
  },
  "same_style": "상품명(Women's·기호·띄어쓰기 무시)이 같고 DPCI 앞 5자리(부서+클래스)가 같을 때만 같은 스타일. Vendor가 다르면 별개. DPCI만 같은 경우는 연결하지 않음. Top↔Bottom 연결 금지."
