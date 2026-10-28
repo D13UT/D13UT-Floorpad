@@ -73,8 +73,12 @@ def is_knit(title, itype, fab, mat):
 
 def cat(title, itype):
     t, ty = low(title), low(itype)
-    if has(ty, ["dress", "jumpsuit", "romper"]) or has(t, ["dress", "jumpsuit", "romper"]): return "D"
-    if has(ty, ["pant", "short", "skirt", "legging", "jogger", "bottom"]) or has(t, ["pant", "short", "skirt", "legging", "jogger", "sweatpant"]): return "B"
+    if has(ty, ["dress", "jumpsuit", "romper"]): return "D"
+    if has(ty, ["pant", "shorts", "skirt", "legging", "jogger", "bottom"]): return "B"
+    if ty: return "T"
+    t = t.replace("short sleeve", "")
+    if has(t, ["dress", "jumpsuit", "romper"]): return "D"
+    if has(t, ["pant", "shorts", "skirt", "legging", "jogger", "sweatpant"]): return "B"
     return "T"
 
 def program(title, dpci, c):

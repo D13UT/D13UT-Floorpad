@@ -3,7 +3,7 @@
 // 결과 행: [tcin, dpci, title, itemType, fabricName, material, regPrice, guestId, clearance(0/1), brand]
 window.UTCollect = async function (prevDpcis) {
   const KEY = "9f36aeafbe60771e321a7cc95a78140772ab3e96";
-  const vid = (document.cookie.match(/visitorId=([^;]+)/) || [])[1] || "";
+  const vid = window.__VID || (window.__VID = [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, "0")).join("").toUpperCase());
   const base = "https://redsky.target.com/redsky_aggregations/v1/web/plp_search_v2";
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const rows = new Map(), log = [];
@@ -44,6 +44,7 @@ window.UTCollect = async function (prevDpcis) {
     }
     log.push(label + ": " + got + "/" + tot);
   }
+  window.__UTstat = "running";
   await sweep("UT 여성", { category: "5xtd3Z1vs54" }, 40);
   await sweep("UT 브랜드", { category: "1vs54" }, 60);
   for (const kw of ["universal thread women knit", "universal thread women tee", "universal thread women tank", "universal thread sweatshirt", "universal thread knit dress", "universal thread pull-on"]) await sweep("검색 " + kw, { keyword: kw }, 10);
@@ -52,7 +53,8 @@ window.UTCollect = async function (prevDpcis) {
   for (const d of prevDpcis || []) { if (have.has(d)) continue; looked++; await sweep("DPCI " + d, { keyword: d }, 1); }
   const out = [...rows.values()].filter(r => /universal thread/i.test(r[9]) || !r[9]);
   window.__UT = JSON.stringify(out);
-  return { rows: out.length, d013: out.filter(r => r[1].startsWith("013")).length, dpciLookups: looked, chars: window.__UT.length, log };
+  window.__UTstat = "done";
+  return window.__UTres = { rows: out.length, d013: out.filter(r => r[1].startsWith("013")).length, dpciLookups: looked, chars: window.__UT.length, log };
 };
 // 큰 결과는 나눠 읽기: UTChunk(0), UTChunk(1) ...
 window.UTChunk = i => (window.__UT || "").slice(i * 12000, (i + 1) * 12000);
