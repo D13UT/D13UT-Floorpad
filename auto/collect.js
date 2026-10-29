@@ -40,17 +40,17 @@ window.UTCollect = async function (prevDpcis) {
     for (let i = 0; i < maxPages; i++) {
       let res; try { res = await page(Object.assign({ offset: off, page: params.category ? "/c/" + params.category : "/s/" + params.keyword }, params)); } catch (e) { log.push(label + " 오류 " + e.message); break; }
       got += res.n; tot = res.tot || tot; off += 24;
-      if (!res.n || (tot && off >= tot)) break; await sleep(350);
+      if (!res.n || (tot && off >= tot)) break; await sleep(1500 + Math.random() * 1000);
     }
     log.push(label + ": " + got + "/" + tot);
   }
   window.__UTstat = "running";
   await sweep("UT 여성", { category: "5xtd3Z1vs54" }, 40);
   await sweep("UT 브랜드", { category: "1vs54" }, 60);
-  for (const kw of ["universal thread women knit", "universal thread women tee", "universal thread women tank", "universal thread sweatshirt", "universal thread knit dress", "universal thread pull-on"]) await sweep("검색 " + kw, { keyword: kw }, 10);
+  for (const kw of ["universal thread women tee", "universal thread sweatshirt"]) { await sleep(3000); await sweep("검색 " + kw, { keyword: kw }, 5); }
   const have = new Set([...rows.values()].map(r => r[1]));
   let looked = 0;
-  for (const d of prevDpcis || []) { if (have.has(d)) continue; looked++; await sweep("DPCI " + d, { keyword: d }, 1); }
+  for (const d of prevDpcis || []) { if (have.has(d)) continue; looked++; await sleep(2000 + Math.random() * 1500); await sweep("DPCI " + d, { keyword: d }, 1); }
   const out = [...rows.values()].filter(r => /universal thread/i.test(r[9]) || !r[9]);
   window.__UT = JSON.stringify(out);
   window.__UTstat = "done";
