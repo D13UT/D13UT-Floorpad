@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
+<head><meta name="referrer" content="no-referrer">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>D13 Universal Thread Research</title>
@@ -96,11 +96,11 @@ footer{text-align:center;color:var(--faint);font-size:12px;padding:8px 20px 30px
     <div class="stats" id="heroStats"></div>
     <div class="ctas">
       <a class="btn primary" id="heroCta" href="report.html">이번 회차 리포트 보기 →</a>
-      <a class="btn ghost" href="https://www.target.com/b/universal-thread/-/N-1vs54" target="_blank" rel="noopener">Target.com UT 브랜드 페이지 ↗</a>
+      <a class="btn ghost" href="https://www.target.com/b/universal-thread/-/N-1vs54" target="_blank" rel="noopener noreferrer">Target.com UT 브랜드 페이지 ↗</a>
     </div>
   </section>
 
-  <a class="card pdf-card" id="latestDoc" target="_blank" rel="noopener"></a>
+  <a class="card pdf-card" id="latestDoc" target="_blank" rel="noopener noreferrer"></a>
 
   <div class="section-title" id="fpTitle"></div>
   <div class="histlist" id="fpList"></div>
@@ -156,7 +156,7 @@ doc.innerHTML=`<div class="pdf-icon">PDF</div><div class="pdf-info"><div class="
 
 // Floor Pad history
 $("fpTitle").textContent=`Floor Pad 업데이트 히스토리 (${FLOORPAD.length}회)`;
-$("fpList").innerHTML=FLOORPAD.map((x,i)=>`<a class="histrow" href="${esc(x.url)}" target="_blank" rel="noopener">
+$("fpList").innerHTML=FLOORPAD.map((x,i)=>`<a class="histrow" href="${esc(x.url)}" target="_blank" rel="noopener noreferrer">
   <div class="histdate">${x.date}${latestTag(i)}</div>
   <div class="histlabel">${esc(x.title)}</div>
   <div class="badges"><span class="mb">${esc(x.store)}</span><span class="mb new">${esc(x.type)}</span><span class="mb">PDF</span></div>
